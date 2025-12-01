@@ -45,7 +45,7 @@ The backend:
 Inside the `backend/` folder:
 
 ```bash
-pip install fastapi uvicorn pymysql google-genai python-dotenv
+pip install -r requirements.txt
 ```
 
 ---
