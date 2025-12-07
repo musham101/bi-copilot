@@ -138,7 +138,7 @@ if run_button:
                     else:
                         st.dataframe(
                             df,
-                            use_container_width=True,
+                            width='stretch',
                             height=450,
                         )
 
