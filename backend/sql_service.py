@@ -1,7 +1,7 @@
 from typing import Dict, List, Tuple, Any
 
 from db_utils import get_mysql_database_schema, build_all_table_descriptions, run_sql, read_file
-from llm_utils import select_relevant_tables, generate_sql_query
+from llm_utils import select_relevant_tables, generate_sql_query, rewrite_user_query
 
 
 class SQLService:
@@ -17,11 +17,18 @@ class SQLService:
         Returns:
           sql_text, relevant_tables, rows, columns
         """
-        # 1) Pick relevant tables
-        relevant_tables = select_relevant_tables(
+        modified_query = rewrite_user_query(
             user_query=user_query,
             table_descriptions=self.all_tables_text,
         )
+        print(f"Rewritten query: {modified_query}")
+        # 1) Pick relevant tables
+        relevant_tables = select_relevant_tables(
+            user_query=modified_query,
+            table_descriptions=self.all_tables_text,
+        )
+
+        print(f"Relevant tables: {relevant_tables}")
 
         # 2) Build text only for these tables
         relevant_tables_text_parts = []
@@ -38,9 +45,11 @@ class SQLService:
 
         # 3) Generate SQL
         sql_text = generate_sql_query(
-            user_query=user_query,
+            user_query=modified_query,
             tables_text=relevant_tables_text,
         )
+
+        print(f"Generated SQL: {sql_text}")
 
         if sql_text.strip().upper().startswith("NOT POSSIBLE WITH GIVEN TABLES"):
             # Don't run anything

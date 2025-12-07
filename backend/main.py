@@ -26,16 +26,16 @@ class QueryResponse(BaseModel):
 
 @app.post("/query", response_model=QueryResponse)
 def query_db(payload: QueryRequest):
-    try:
+    # try:
         sql_text, relevant_tables, rows, columns = service.handle_user_query(
             payload.user_query
         )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    # except Exception as e:
+    #     raise HTTPException(status_code=500, detail=str(e))
 
-    return QueryResponse(
-        sql=sql_text,
-        relevant_tables=relevant_tables,
-        columns=columns,
-        rows=rows,
-    )
+        return QueryResponse(
+            sql=sql_text,
+            relevant_tables=relevant_tables,
+            columns=columns,
+            rows=rows,
+        )
