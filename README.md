@@ -36,8 +36,8 @@ This project is an end-to-end system that:
 
 The backend:
 
-* Loads database credentials & Gemini API key from `.env`
-* Uses **Gemini 2.5 Flash** to select tables + generate SQL
+* Loads database credentials, Gemini API key & OpenAI API key from `.env`
+* Uses **Gemini 2.5 Flash** or **gpt-4o-mini** Open to select tables + generate SQL
 * Introspects the database schema via `INFORMATION_SCHEMA`
 * Executes SQL and returns rows + metadata
 
