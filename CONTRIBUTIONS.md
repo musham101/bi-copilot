@@ -1,7 +1,5 @@
-# 📌 CONTRIBUTIONS.md
-
 **Project:** AI BI Copilot  
-**Group:** Group # 1  
+**Group:** Group #1  
 
 ---
 
@@ -37,36 +35,6 @@ I would improve the UI by adding advanced filters, better chart customization, c
 
 ## Team Member 2
 
-### Name: Sana Ilyas  
-*Student ID:* MSDS24058  
-*Role:* API & Dataset Configuration Developer
-
-### A. Contribution Table
-
-| Category | Description of Work | Evidence / Location |
-|--------|---------------------|---------------------|
-| API Key Management | Created and configured API key handling for LLM access | Configuration files |
-| Environment Setup | Managed environment variables and secure API usage | .env / config setup |
-| Dataset Cleaning | Cleaned, normalized, and formatted SQL queries | Dataset preprocessing scripts |
-| Data Validation | Ensured schema-consistent column names, types, and formats | Schema validation logic |
-| Integration Support | Ensured backend services access external APIs correctly | Backend integration points |
-| Testing | Verified API connectivity, dataset consistency, and error handling | Test executions |
-
-### B. Individual Reflection
-
-**Biggest Contribution**  
-My main contribution was managing API keys and configuring secure access to external language model services, along with cleaning and validating the dataset to ensure schema-consistent SQL queries.
-
-**What I Learned**  
-I learned that even small dataset issues—such as incorrect column names or formatting—can cause major failures in query execution and evaluation. I also gained insight into how backend pipelines and frontend components depend on clean, validated data.
-
-**What I Would Improve**  
-I would automate dataset validation, add stronger logging, handle API rate limits more robustly, and integrate the dataset into an agentic evaluation framework.
-
----
-
-## Team Member 3
-
 ### Name: Musham Ahmad Malik  
 *Student ID:* MSDS24049  
 *Role:* Backend, LLM & Pipeline Developer
@@ -94,3 +62,33 @@ I learned that LLMs can generate syntactically correct SQL that is semantically 
 
 **What I Would Improve**  
 I would improve dataset coverage, retrieval accuracy, and build a fully automated agentic benchmarking system that dynamically evaluates SQL generation against live databases.
+
+---
+
+## Team Member 3
+
+### Name: Sana Ilyas  
+*Student ID:* MSDS24058  
+*Role:* API & Dataset Configuration Developer
+
+### A. Contribution Table
+
+| Category | Description of Work | Evidence / Location |
+|--------|---------------------|---------------------|
+| API Key Management | Created and configured API key handling for LLM access | Configuration files |
+| Environment Setup | Managed environment variables and secure API usage | .env / config setup |
+| Dataset Cleaning | Cleaned, normalized, and formatted SQL queries | Dataset preprocessing scripts |
+| Data Validation | Ensured schema-consistent column names, types, and formats | Schema validation logic |
+| Integration Support | Ensured backend services access external APIs correctly | Backend integration points |
+| Testing | Verified API connectivity, dataset consistency, and error handling | Test executions |
+
+### B. Individual Reflection
+
+**Biggest Contribution**  
+My main contribution was managing API keys and configuring secure access to external language model services, along with cleaning and validating the dataset to ensure schema-consistent SQL queries.
+
+**What I Learned**  
+I learned that even small dataset issues—such as incorrect column names or formatting—can cause major failures in query execution and evaluation. I also gained insight into how backend pipelines and frontend components depend on clean, validated data.
+
+**What I Would Improve**  
+I would automate dataset validation, add stronger logging, handle API rate limits more robustly, and integrate the dataset into an agentic evaluation framework.
