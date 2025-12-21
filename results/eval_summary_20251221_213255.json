@@ -1,0 +1,14 @@
+{
+  "n": 15,
+  "api_success_rate": 0.8,
+  "avg_latency_s": 14.163130458196004,
+  "exact_match_rate": 0.0,
+  "normalized_exact_match_rate": 0.06666666666666667,
+  "avg_token_f1": 0.56254590695965,
+  "avg_keyword_f1": 0.7205817711700065,
+  "avg_edit_similarity": 0.46726268151567546,
+  "judge_used": true,
+  "judge_rows": 12,
+  "avg_judge_score_0_5": 3.8333333333333335,
+  "judge_equivalent_rate": 0.5833333333333334
+}
