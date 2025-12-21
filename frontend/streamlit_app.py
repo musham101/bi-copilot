@@ -74,7 +74,7 @@ st.sidebar.title("⚙️ Settings")
 
 api_url = st.sidebar.text_input(
     "FastAPI endpoint",
-    value="https://6a0876cdbf65.ngrok-free.app/query"
+    value="http://localhost:8000/query"
 )
 
 st.sidebar.markdown("---")
