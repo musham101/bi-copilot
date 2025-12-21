@@ -1,16 +1,16 @@
 # AI BI Copilot (AdventureWorks2014)
 
-This project is an end-to-end **LLM-powered Business Intelligence Copilot** that:
+An end-to-end **LLM-powered BI Copilot** that:
 
-1. Takes a **natural language query** from the user
-2. Uses **LLMs (Gemini / OpenAI)** to:
+1. Takes a natural language query
+2. Uses LLMs (Gemini / OpenAI) to:
 
-   * Select the **relevant database tables**
-   * Generate a **strict, non-hallucinating SQL query**
-3. Executes that SQL against the **AdventureWorks2014 (MySQL)** database
-4. Returns results via a **FastAPI backend**
-5. Exposes a **Streamlit frontend** for an interactive UI
-6. Supports **offline evaluation** using labeled datasets (`test.csv`, `val.csv`)
+   * Select relevant database tables
+   * Generate a strict, schema-grounded SQL query
+3. Executes SQL on the AdventureWorks2014 (MySQL) database
+4. Serves results via a FastAPI backend
+5. Provides a Streamlit frontend for interactive querying
+6. Includes an evaluation notebook that benchmarks the system using `val.csv` and `test.csv`
 
 ---
 
@@ -20,20 +20,23 @@ This project is an end-to-end **LLM-powered Business Intelligence Copilot** that
 .
 ├─ README.md
 ├─ data/
-│  ├─ test.csv              # Evaluation dataset (held-out)
-│  └─ val.csv               # Validation dataset
+│  ├─ val.csv                         # Validation set for tuning
+│  └─ test.csv                        # Held-out evaluation set
 └─ src/
    ├─ backend/
-   │  ├─ .env               # Secrets & configuration
-   │  ├─ config.py          # Loads env vars via python-dotenv
+   │  ├─ .env                         # Backend secrets + config
+   │  ├─ config.py                    # Loads env vars via python-dotenv
    │  ├─ prompt_templates.py
    │  ├─ llm_utils.py
    │  ├─ db_utils.py
    │  ├─ sql_service.py
-   │  └─ main.py            # FastAPI entrypoint
-   └─ frontend/
-      ├─ streamlit_app.py   # Primary Streamlit UI
-      └─ streamlit_app_v1.py
+   │  └─ main.py                      # FastAPI entrypoint
+   ├─ frontend/
+   │  ├─ streamlit_app.py             # Streamlit UI (primary)
+   │  └─ streamlit_app_v1.py
+   └─ notebooks/
+      ├─ .env                         # Notebook secrets (separate from backend)
+      └─ evalutate_system.ipynb       # Evaluation notebook (FastAPI + OpenAI judge)
 ```
 
 ---
@@ -42,22 +45,25 @@ This project is an end-to-end **LLM-powered Business Intelligence Copilot** that
 
 The backend is responsible for:
 
-* Loading credentials from `.env`
-* Schema introspection using `INFORMATION_SCHEMA`
-* LLM-based **table selection + SQL generation**
-* SQL execution on AdventureWorks2014
-* Returning rows, columns, and metadata
+* Loading credentials and API keys from `src/backend/.env`
+* Introspecting schema via `INFORMATION_SCHEMA` (cached)
+* LLM step 1: table selection
+* LLM step 2: SQL generation
+* Executing SQL on AdventureWorks2014 and returning:
+
+  * generated SQL
+  * selected tables
+  * returned columns
+  * result rows
 
 ### Supported LLMs
 
-* **Gemini 2.5 Flash**
-* **gpt-4o-mini**
+* Gemini 2.5 Flash
+* OpenAI models (e.g., gpt-4o-mini, gpt-5-mini)
 
 ---
 
-### 1. Backend Installation
-
-From the project root:
+### Install backend dependencies
 
 ```bash
 pip install -r requirements.txt
@@ -65,38 +71,31 @@ pip install -r requirements.txt
 
 ---
 
-### 2. `.env` File (Required)
+### Backend environment variables
 
-Create **`src/backend/.env`**:
+Create `src/backend/.env`:
 
 ```env
 OPENAI_API_KEY=YOUR_OPENAI_API_KEY
 GEMINI_API_KEY=YOUR_GEMINI_API_KEY
+# Optional DB config:
+# DB_HOST=localhost
+# DB_PORT=3306
+# DB_USER=root
+# DB_PASSWORD=...
+# DB_NAME=AdventureWorks2014
 ```
-
-All secrets are loaded centrally via `config.py`.
 
 ---
 
-### 3. Config Loading (Already Implemented)
-
-```python
-from dotenv import load_dotenv
-load_dotenv()
-```
-
-No hardcoded secrets anywhere in the codebase.
-
----
-
-### 4. Run the Backend
+### Run the backend
 
 ```bash
 cd src/backend
 uvicorn main:app --reload
 ```
 
-FastAPI will be available at:
+Backend runs at:
 
 ```
 http://localhost:8000
@@ -104,9 +103,7 @@ http://localhost:8000
 
 ---
 
-## Backend API Testing
-
-### Example Request
+## API Testing
 
 ```bash
 curl -X POST "http://localhost:8000/query" \
@@ -114,7 +111,7 @@ curl -X POST "http://localhost:8000/query" \
   -d '{"user_query": "Detect customers who placed multiple orders within 24 hours."}'
 ```
 
-### Example Response
+Example response:
 
 ```json
 {
@@ -132,31 +129,31 @@ curl -X POST "http://localhost:8000/query" \
 
 ## Frontend (Streamlit)
 
-The Streamlit UI allows users to:
+The Streamlit UI supports:
 
-* Enter natural language queries
-* View:
+* Natural language query input
+* Viewing:
 
-  * Selected tables
-  * Generated SQL
-  * Query results (tabular)
-* Download results as CSV
-* Browse recent query history (up to 10)
+  * relevant tables
+  * generated SQL
+  * results table
+* CSV download
+* Query history (up to 10)
 
----
-
-### Run the Streamlit App
-
-From the project root:
+### Run the frontend
 
 ```bash
 cd src/frontend
 streamlit run streamlit_app.py
 ```
 
-(or `streamlit_app_v1.py`)
+(or)
 
-Open in browser:
+```bash
+streamlit run streamlit_app_v1.py
+```
+
+Open:
 
 ```
 http://localhost:8501
@@ -164,60 +161,93 @@ http://localhost:8501
 
 ---
 
-## End-to-End System Flow
+## End-to-End Flow
 
-1. User enters a query in **Streamlit**
-2. Streamlit → `POST /query`
+1. User enters a query in Streamlit
+2. Streamlit sends request to FastAPI (`POST /query`)
 3. FastAPI:
 
-   * Loads cached schema
-   * LLM step 1 → relevant tables
-   * LLM step 2 → strict SQL
-   * Executes SQL
-4. Response returned:
-
-   * SQL
-   * Tables
-   * Columns
-   * Rows
-5. Streamlit renders everything interactively
+   * loads cached schema
+   * selects relevant tables via LLM
+   * generates strict SQL
+   * executes SQL
+4. Response includes SQL, tables, columns, and rows
+5. Streamlit renders results
 
 ---
 
-## Evaluation & Benchmarking
+## Evaluation (Notebook)
 
-The `data/` directory contains labeled datasets used to **evaluate system quality**:
+Evaluation is performed in:
 
-```text
-data/
-├─ val.csv     # Used during development & tuning
-└─ test.csv    # Final evaluation set
+```
+src/notebooks/evalutate_system.ipynb
 ```
 
-These datasets are used to measure:
+The notebook:
 
-* SQL exact match
-* Normalized SQL match
-* Token-level F1
-* Keyword F1
-* Execution correctness
-* LLM judge scores (optional)
+* Sends each user query to the running FastAPI backend
+* Compares predicted SQL against gold SQL using:
 
-> **Important:**
-> `test.csv` is never used during prompt or system tuning.
+  * Exact match
+  * Normalized exact match
+  * Token-level F1
+  * Keyword F1
+  * Edit similarity
+* Optionally uses an OpenAI judge (Responses API) for semantic equivalence scoring (0–5)
 
 ---
 
-## Example Query
+### Notebook environment variables
 
-**User Input**
+Create `src/notebooks/.env`:
 
-> “Detect customers who placed multiple orders within 24 hours.”
+```env
+OPENAI_API_KEY=YOUR_OPENAI_API_KEY
+```
 
-**System Output**
+This allows evaluation to run independently from backend configuration.
 
-* **Relevant Tables:** `Customer`, `SalesOrderHeader`
-* **Generated SQL:** Strict, executable SQL
-* **Result:** List of CustomerIDs
+---
 
-Displayed instantly in the frontend.
+### Dataset path configuration
+
+Dataset files are located at:
+
+```text
+data/val.csv
+data/test.csv
+```
+
+From `src/notebooks/`, set in the notebook:
+
+```python
+DATASET_DIR = "../../data"
+```
+
+---
+
+### Running evaluation
+
+1. Start the backend:
+
+   ```bash
+   uvicorn main:app --reload
+   ```
+2. Open and run all cells in `evalutate_system.ipynb`
+3. Evaluation outputs are saved as:
+
+   * `eval_results_<timestamp>.csv`
+   * `eval_summary_<timestamp>.json`
+
+---
+
+## Notes on OpenAI Judge Model
+
+The notebook defaults to:
+
+```python
+OPENAI_MODEL = "gpt-4o-mini"
+```
+
+Ensure the selected model is available in your OpenAI account.
