@@ -51,7 +51,7 @@ div[data-testid="stExpander"] details { border-radius: 14px; }
 # ============================================================
 # Helpers
 # ============================================================
-DEFAULT_API_URL = "https://6a0876cdbf65.ngrok-free.app/query"
+DEFAULT_API_URL = "http://localhost:8000/query"
 DEFAULT_QUERY = "Detect customers who placed multiple orders within 24 hours."
 
 SAMPLE_QUERIES = [
