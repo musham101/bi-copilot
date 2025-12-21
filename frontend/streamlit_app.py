@@ -1,9 +1,13 @@
+import json
+import time
+from datetime import datetime
+
 import requests
 import pandas as pd
 import streamlit as st
 
 # ---------------------------
-# Basic Page Config
+# Page Config
 # ---------------------------
 st.set_page_config(
     page_title="LLM SQL Assistant",
@@ -12,68 +16,116 @@ st.set_page_config(
 )
 
 # ---------------------------
-# Sidebar Settings
+# SAFE UI STYLING
+# ---------------------------
+st.markdown("""
+<style>
+html, body, [class*="css"] {
+    font-family: Inter, system-ui, -apple-system;
+}
+h1, h2, h3 {
+    font-weight: 600;
+}
+section.main {
+    padding-top: 1rem;
+}
+section[data-testid="stSidebar"] {
+    background-color: #f8f9fa;
+}
+textarea {
+    border-radius: 10px !important;
+    border: 1px solid #dcdde1 !important;
+    font-size: 14px !important;
+}
+div.stButton > button {
+    width: 100%;
+    border-radius: 10px;
+    padding: 0.6rem;
+    font-weight: 600;
+}
+div.stButton > button[kind="primary"] {
+    background-color: #1f6feb;
+    color: white;
+}
+div.stButton > button[kind="primary"]:hover {
+    background-color: #1a5fd0;
+}
+div.stDownloadButton > button {
+    background-color: #3498db;
+    color: white;
+    border-radius: 10px;
+}
+div.stDownloadButton > button:hover {
+    background-color: #2980b9;
+}
+div[data-testid="stDataFrame"],
+pre,
+div[data-testid="stExpander"],
+div[data-testid="stAlert"] {
+    border-radius: 12px;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# ---------------------------
+# Sidebar
 # ---------------------------
 st.sidebar.title("⚙️ Settings")
 
-default_api_url = "http://localhost:8001/query"
-api_url = st.sidebar.text_input("FastAPI endpoint", value=default_api_url)
+api_url = st.sidebar.text_input(
+    "FastAPI endpoint",
+    value="https://6a0876cdbf65.ngrok-free.app/query"
+)
 
 st.sidebar.markdown("---")
-st.sidebar.markdown("**Tips**")
 st.sidebar.markdown(
-    "- Make sure FastAPI is running.\n"
-    "- Use natural language, e.g.:\n"
-    "  - `Detect customers who placed multiple orders within 24 hours.`\n"
-    "  - `Show top 10 products by total sales amount.`"
+    "- Ensure FastAPI is running\n"
+    "- Ask natural language questions\n"
+    "- SQL execution is read-only & safe"
 )
 
 # ---------------------------
-# Session State for History
+# Session State
 # ---------------------------
 if "history" not in st.session_state:
-    st.session_state.history = []  # list of dicts: {query, sql, tables, row_count}
-
+    st.session_state.history = []
 
 # ---------------------------
-# Main Header
+# Header
 # ---------------------------
-st.title("🧠 LLM-Powered SQL Assistant")
+st.title("LLM-Powered SQL Assistant")
 st.caption(
-    "Ask questions in natural language. The system uses Gemini + AdventureWorks2014 to "
-    "generate and execute SQL safely."
+    "Ask questions in natural language. The system generates and executes SQL safely."
 )
 
 # ---------------------------
-# Query Input Area
+# Query Input
 # ---------------------------
 with st.container():
-    st.subheader("📝 Ask Your Question")
+    st.subheader("Ask Your Question")
+
     user_query = st.text_area(
-        "Enter your question about the database:",
+        "Enter your question:",
         value="Detect customers who placed multiple orders within 24 hours.",
         height=100,
-        placeholder="e.g. Show total sales per year by country",
     )
-    col_run, col_clear = st.columns([1, 0.4])
-    with col_run:
-        run_button = st.button("🚀 Run Query", type="primary")
-    with col_clear:
-        clear_button = st.button("🧹 Clear Results")
 
-if clear_button:
-    st.session_state.history = []
-    st.experimental_rerun()
+    col1, col2 = st.columns([1.2, 1.8])
+
+    with col1:
+        run_button = st.button("Run Query", type="primary")
+
+    with col2:
+        show_details = st.toggle("Show SQL & metadata", value=False)
 
 # ---------------------------
-# Helper: Call FastAPI
+# API Helper
 # ---------------------------
 def call_api(api_url: str, user_query: str):
     payload = {"user_query": user_query}
-    resp = requests.post(api_url, json=payload, timeout=60)
-    resp.raise_for_status()
-    return resp.json()
-
+    r = requests.post(api_url, json=payload, timeout=60)
+    r.raise_for_status()
+    return r.json()
 
 # ---------------------------
 # Run Query
@@ -81,93 +133,102 @@ def call_api(api_url: str, user_query: str):
 if run_button:
     if not user_query.strip():
         st.warning("Please enter a query first.")
-    elif not api_url.strip():
-        st.error("Please provide a valid FastAPI endpoint URL.")
     else:
-        with st.spinner("Thinking, generating SQL, and querying the database..."):
+        with st.spinner("Generating SQL and querying database..."):
             try:
+                start = time.time()
                 data = call_api(api_url, user_query.strip())
+                latency_ms = (time.time() - start) * 1000
 
                 sql = data.get("sql", "")
-                relevant_tables = data.get("relevant_tables", [])
-                columns = data.get("columns", [])
+                tables = data.get("relevant_tables", [])
                 rows = data.get("rows", [])
+                columns = data.get("columns", [])
 
-                # Convert rows to DataFrame for display
                 df = pd.DataFrame(rows) if rows else pd.DataFrame(columns=columns)
 
-                # Save to history
+                # Save history
                 st.session_state.history.insert(
                     0,
                     {
                         "query": user_query.strip(),
                         "sql": sql,
-                        "tables": relevant_tables,
-                        "row_count": len(df),
-                    },
+                        "tables": tables,
+                        "rows": len(df),
+                        "latency": latency_ms,
+                        "ts": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        "raw_rows": rows,
+                    }
                 )
-
-                # Limit history length
                 st.session_state.history = st.session_state.history[:10]
 
-                # Display results
-                st.success("Query executed successfully!")
+                st.success(f"Query executed successfully in {latency_ms:.0f} ms")
 
-                # Layout: left = SQL / info, right = data table
-                left_col, right_col = st.columns([1.1, 1.9])
+                # ---------------------------
+                # Results
+                # ---------------------------
+                st.subheader(f"Results ({len(df)} rows)")
+                st.dataframe(df, height=450, use_container_width=True)
 
-                with left_col:
-                    st.subheader("🧩 Relevant Tables")
-                    if relevant_tables:
-                        for t in relevant_tables:
-                            st.markdown(f"- `{t}`")
-                    else:
-                        st.write("No tables identified or returned.")
+                c1, c2 = st.columns(2)
+                with c1:
+                    st.download_button(
+                        "⬇️ Download CSV",
+                        df.to_csv(index=False).encode("utf-8"),
+                        "query_results.csv",
+                        "text/csv",
+                    )
+                with c2:
+                    st.download_button(
+                        "⬇️ Download JSON",
+                        json.dumps(rows, indent=2).encode("utf-8"),
+                        "query_results.json",
+                        "application/json",
+                    )
 
-                    st.subheader("🧾 Generated SQL")
-                    if sql.strip().upper().startswith("NOT POSSIBLE WITH GIVEN TABLES"):
-                        st.error("❌ Not possible with given tables.")
+                if show_details:
+                    st.markdown("### Technical Details")
+
+                    with st.expander("Generated SQL"):
                         st.code(sql, language="sql")
-                    else:
-                        st.code(sql, language="sql")
 
-                with right_col:
-                    st.subheader(f"📊 Result Preview ({len(df)} rows)")
-                    if df.empty:
-                        st.info("No rows returned for this query.")
-                    else:
-                        st.dataframe(
-                            df,
-                            width='stretch',
-                            height=450,
-                        )
+                    with st.expander("Relevant Tables"):
+                        st.write(", ".join(tables) if tables else "—")
 
-                        # Option to download as CSV
-                        csv = df.to_csv(index=False).encode("utf-8")
-                        st.download_button(
-                            label="⬇️ Download results as CSV",
-                            data=csv,
-                            file_name="query_results.csv",
-                            mime="text/csv",
-                        )
+                    with st.expander("Raw API Payload"):
+                        st.code(json.dumps(data, indent=2), language="json")
 
-            except requests.exceptions.RequestException as e:
-                st.error(f"Error calling API: {e}")
             except Exception as e:
-                st.error(f"Unexpected error: {e}")
-
+                st.error(str(e))
 
 # ---------------------------
-# Query History (bottom)
+# Recent Queries (SEARCH + RESET)
 # ---------------------------
 if st.session_state.history:
     st.markdown("---")
-    st.subheader("🕒 Recent Queries")
+    st.subheader("Recent Queries")
 
-    for i, item in enumerate(st.session_state.history):
-        with st.expander(f"{i+1}. {item['query']}"):
-            st.markdown(f"**Row count:** `{item['row_count']}`")
+    search_text = st.text_input(
+        "Search recent queries",
+        placeholder="type to filter…"
+    )
+
+    c1, c2 = st.columns([4, 1])
+    with c2:
+        if st.button("Reset history"):
+            st.session_state.history = []
+            st.experimental_rerun()
+
+    filtered = st.session_state.history
+    if search_text.strip():
+        s = search_text.lower()
+        filtered = [h for h in filtered if s in h["query"].lower()]
+
+    for i, item in enumerate(filtered):
+        subtitle = f"{item['ts']} • {item['rows']} rows • {item['latency']:.0f} ms"
+        with st.expander(f"{i+1}. {item['query']}\n\n{subtitle}"):
+            st.code(item["query"])
+            st.markdown(f"**Latency:** {item['latency']:.0f} ms")
             if item["tables"]:
-                st.markdown("**Relevant tables:** " + ", ".join(f"`{t}`" for t in item["tables"]))
-            st.markdown("**Generated SQL:**")
+                st.markdown("**Tables:** " + ", ".join(item["tables"]))
             st.code(item["sql"], language="sql")
