@@ -1,5 +1,6 @@
-backend/__pycache__/
-backend/.env
-*.csv
+src/backend/__pycache__/
+src/backend/.env
+notebooks/.env
 test*.ipynb
 test*.py
+evaluate_system.py

@@ -1,0 +1,6 @@
+id,user_query,sql_query
+20,Find the products supplied by more than 2 vendors.,"SELECT ProductID, COUNT(*) AS VendorCount FROM ProductVendor GROUP BY ProductID HAVING VendorCount > 2;"
+5,List the product categories along with the number of subcategories in each product category?,"SELECT pc.ProductCategoryID, pc.Name AS ProductCategoryName, COUNT(ps.ProductSubcategoryID) AS SubCategoryCount FROM ProductCategory pc LEFT JOIN ProductSubcategory ps ON pc.ProductCategoryID = ps.ProductCategoryID GROUP BY pc.ProductCategoryID, pc.Name ORDER BY pc.ProductCategoryID;"
+14,Get the top 5 customers by total revenue.,"SELECT c.CustomerID, SUM(soh.TotalDue) AS Revenue FROM SalesOrderHeader soh JOIN Customer c ON soh.CustomerID = c.CustomerID GROUP BY c.CustomerID ORDER BY Revenue DESC LIMIT 5;"
+9,Retrieve all products that have never been ordered.,"SELECT p.ProductID, p.Name FROM Product p LEFT JOIN SalesOrderDetail sod ON p.ProductID = sod.ProductID WHERE sod.ProductID IS NULL;"
+49,Get the total sales value for each month of each year.,"SELECT YEAR(OrderDate) AS Yr, MONTH(OrderDate) AS Mn, SUM(TotalDue) AS TotalSales FROM SalesOrderHeader GROUP BY YEAR(OrderDate), MONTH(OrderDate) ORDER BY Yr, Mn;"
