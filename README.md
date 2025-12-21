@@ -26,6 +26,7 @@ This project is an end-to-end system that:
 │  ├─ sql_service.py
 │  └─ main.py                        # FastAPI entrypoint
 └─ frontend/
+   ├─ streamlit_app_v1.py            # Streamlit UI
    └─ streamlit_app.py               # Streamlit UI
 ````
 
@@ -55,6 +56,7 @@ pip install -r requirements.txt
 Create a file named **backend/.env** with:
 
 ```
+OPENAI_API_KEY=YOUR_OPENAI_API_KEY
 GEMINI_API_KEY=YOUR_GEMINI_KEY_HERE
 ```
 ---
@@ -127,20 +129,16 @@ The Streamlit UI allows you to:
 * Download results as CSV
 * See query history (up to 10)
 
-### 1. Requirements
-
-Inside the `frontend/` folder:
-
-```bash
-pip install streamlit pandas requests
-```
-
----
-
-### 2. Run the Streamlit app
+### 1. Run the Streamlit app
 
 ```bash
 streamlit run streamlit_app.py
+```
+
+or
+
+```bash
+streamlit run streamlit_app_v1.py
 ```
 
 Open:
