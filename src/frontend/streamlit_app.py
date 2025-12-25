@@ -116,7 +116,7 @@ with st.container():
         run_button = st.button("Run Query", type="primary")
 
     with col2:
-        show_details = st.toggle("Show SQL & metadata", value=False)
+        show_details = st.toggle("Show SQL & metadata", value=True)
 
 # ---------------------------
 # API Helper
